@@ -1,4 +1,4 @@
-package scripts;
+package examples;
 
 import java.awt.Graphics;
 import java.awt.Rectangle;

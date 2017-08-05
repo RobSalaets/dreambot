@@ -12,10 +12,10 @@ import org.dreambot.api.utilities.Timer;
 import org.dreambot.api.utilities.impl.Condition;
 import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.api.wrappers.interactive.NPC;
-import org.dreambot.api.wrappers.interactive.Player;
 import org.dreambot.api.wrappers.items.Item;
 
-import scripts.Task.TaskBody;
+import base.Task;
+import base.Task.TaskBody;
 
 @ScriptManifest(author = "RobbieBoi", name = "Climbing Boots", version = 1.0, description = "Buys climbing boots from tenzing and banks them in castle wars bank", category = Category.MONEYMAKING)
 public class ClimbingBootsScript extends AbstractScript {
@@ -94,7 +94,10 @@ public class ClimbingBootsScript extends AbstractScript {
 				setNextTask(shedWalk);
 			if (getInventory().count("Coins") < 12
 					|| (getInventory().isFull() && getInventory().count("Coins") >= 12)) {
-				setNextTask(bank);
+				if(gui.getTradeAccount() != null)
+					setNextTask(trade);
+				else
+					setNextTask(bank);
 			}
 			if (getDialogues().inDialogue()) {
 				if (getDialogues().getOptions() != null)
@@ -165,23 +168,20 @@ public class ClimbingBootsScript extends AbstractScript {
 		public int execute() {
 			
 			if (getTrade().isOpen()) {
-				log("open");
 				if (getInventory().contains("Climbing boots")) {
 					getTrade().addItem("Climbing boots", 28);
 					conditionalSleep(() -> !getInventory().contains("Climbing boots"), 1000, 2000);
 				}
 				getTrade().acceptTrade();
 			}else{
-				getTrade().tradeWithPlayer(gui.getTradeAccount());
-				log("Trading with " + gui.getTradeAccount());
-				conditionalSleep(() -> getTrade().isOpen(), 5000, 6000);
-				
+				if(getInventory().contains("Climbing boots")){
+					getTrade().tradeWithPlayer(gui.getTradeAccount());
+					log("Trading with " + gui.getTradeAccount());
+					conditionalSleep(() -> getTrade().isOpen(), 5000, 6000);
+				}else
+					setNextTask(bank);
 			}
-//			else{
-//				if(!getInventory().contains("Climbing boots"))
-//					setNextTask(bank);
-//			}
-			return 1;
+			return Calculations.random(200,400);
 		}
 	});
 
@@ -255,10 +255,10 @@ public class ClimbingBootsScript extends AbstractScript {
 
 	public void onPaint(Graphics g) {
 		if (currentTask != null) {
-			g.drawString("State: " + currentTask.getLabel(), 10, 25);
+			g.drawString("State: " + currentTask.getLabel(), 10, 35);
 		}
 		if (timer != null)
-			g.drawString("Runtime: " + timer.formatTime(), 10, 40);
+			g.drawString("Runtime: " + timer.formatTime(), 10, 50);
 
 	}
 }
