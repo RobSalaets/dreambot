@@ -41,14 +41,13 @@ public class ClimbingBootsScript extends AbstractScript {
 			conditionalSleep(() -> getWalking().isRunEnabled(), 1000, 1200);
 			getWidgets().getWidget(548).getChild(9).interact("Look North");
 
-			if (getLocalPlayer().distance(TENZING) < 2)
+			if (!checkTeleports(NECKLACE_ID_0, null) || !checkTeleports(RING_ID_0, null)
+					|| getInventory().count("Coins") < getInventory().emptySlotCount() * 12 || getInventory().isFull())
+				setNextTask(bank);
+			else if (getLocalPlayer().distance(TENZING) < 2)
 				setNextTask(tenzingTalk);
 			else
 				setNextTask(shedWalk);
-			if (!checkTeleports(NECKLACE_ID_0, null) || !checkTeleports(RING_ID_0, null)
-					|| getInventory().count("Coins") < 336)
-				setNextTask(bank);
-//			setNextTask(trade);
 
 			return Calculations.random(200, 500);
 		}
@@ -92,8 +91,7 @@ public class ClimbingBootsScript extends AbstractScript {
 		public int execute() {
 			if (getLocalPlayer().distance(TENZING) > 2)
 				setNextTask(shedWalk);
-			if (getInventory().count("Coins") < 12
-					|| (getInventory().isFull() && getInventory().count("Coins") >= 12)) {
+			if ((getInventory().isFull() && getInventory().count("Coins") != 12)) {
 				if(gui.getTradeAccount() != null)
 					setNextTask(trade);
 				else
@@ -166,6 +164,12 @@ public class ClimbingBootsScript extends AbstractScript {
 	private Task trade = new Task("Trading", new TaskBody() {
 		@Override
 		public int execute() {
+			if (getLocalPlayer().distance(CW_BANK) > 10 && checkTeleports(RING_ID_0, i -> i.interact("Castle Wars"))) {
+				conditionalSleep(() -> getLocalPlayer().distance(CW_BANK) < 4, 4000, 4500);
+				getWalking().walk(CW_CHEST_TILE);
+				walkingSleep();
+				return Calculations.random(500, 800); //TODO noring
+			}
 			
 			if (getTrade().isOpen()) {
 				if (getInventory().contains("Climbing boots")) {
