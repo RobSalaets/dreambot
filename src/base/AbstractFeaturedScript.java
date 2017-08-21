@@ -39,9 +39,17 @@ public abstract class AbstractFeaturedScript extends AbstractScript implements M
 		return currentTask.execute();
 	}
 
-	protected void setNextTask(Task next){
+	public void setNextTask(Task next){
 		currentTask = next;
 		smallTasks.clear();
+	}
+	
+	public String getTask(){
+		return currentTask.getLabel();
+	}
+	
+	public Timer getTimer(){
+		return timer;
 	}
 
 	protected void addToSmallTasks(int priority, TaskBody body){
@@ -75,9 +83,8 @@ public abstract class AbstractFeaturedScript extends AbstractScript implements M
 		return false;
 	}
 
-	protected void roofToggle(){
-		getKeyboard().type("::toggleroof");
-		sleep(500);
+	protected void roofsOff(){
+		getClientSettings().toggleRoofs(false);
 	}
 
 	public void onPaint(Graphics g){
@@ -90,9 +97,6 @@ public abstract class AbstractFeaturedScript extends AbstractScript implements M
 
 	@Override
 	public void onGameMessage(Message m){
-		if(m.getMessage().equals("Roofs will only be removed selectively.")){
-			roofToggle();
-		}
 	}
 
 	@Override

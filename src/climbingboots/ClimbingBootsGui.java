@@ -33,10 +33,8 @@ public class ClimbingBootsGui extends JFrame{
 		super("Script Settings");
 		accountNames = new ArrayList<>();
 		JPanel panel = new JPanel();
-		setContentPane(panel);
-		setSize(400, 400);
+		setSize(400, 600);
 		setLocationRelativeTo(null);
-		setVisible(true);
 		panel.setLayout(new BorderLayout());
 		String[] stringFriends = new String[friends.length];
 		for(int j = 0; j < friends.length; j++)
@@ -67,11 +65,9 @@ public class ClimbingBootsGui extends JFrame{
 		panel.add(flsp, BorderLayout.WEST);
 		panel.add(tlsp, BorderLayout.EAST);
 		JPanel bottom = new JPanel(new FlowLayout());
-		panel.add(bottom, BorderLayout.PAGE_END);
 		JPanel top = new JPanel(new BorderLayout());
 		top.add(new JLabel("Friends"), BorderLayout.WEST);
 		top.add(new JLabel("Selected"), BorderLayout.EAST);
-		panel.add(top, BorderLayout.PAGE_START);
 		JTextField txtField = new JTextField(13);
 		txtField.addActionListener(new ActionListener() {
 			@Override
@@ -104,6 +100,11 @@ public class ClimbingBootsGui extends JFrame{
 			}
 		});
 		bottom.add(button);
+		panel.add(top, BorderLayout.PAGE_START);
+		panel.add(bottom, BorderLayout.PAGE_END);
+		setContentPane(panel);
+		setVisible(true);
+		pack();
 	}
 
 	public List<String> getTradeAccounts(){

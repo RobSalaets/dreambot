@@ -4,6 +4,7 @@ import java.util.function.Consumer;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.map.Tile;
+import org.dreambot.api.randoms.RandomEvent;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.wrappers.interactive.GameObject;
@@ -37,7 +38,8 @@ public class ClimbingBootsScript extends AbstractFeaturedScript{
 			conditionalSleep(() -> getWalking().isRunEnabled(), 1000, 1200);
 			getWidgets().getWidget(548).getChild(9).interact("Look North");
 			sleep(200);
-			roofToggle();
+			if(getClientSettings().roofsEnabled())
+				roofsOff();
 
 			if(!checkTeleports(NECKLACE_ID_0, null) || !checkTeleports(RING_ID_0, null) || getInventory().count("Coins") < getInventory().emptySlotCount() * 12 || getInventory().isFull())
 				setNextTask(bank);
@@ -87,9 +89,7 @@ public class ClimbingBootsScript extends AbstractFeaturedScript{
 			if(getLocalPlayer().distance(TENZING) > 2)
 				setNextTask(shedWalk);
 			if((getInventory().isFull() && getInventory().count("Coins") != 12)){
-				if(doTrade())
-					setNextTask(trade);
-				else setNextTask(bank);
+				setNextTask(bank);
 			}else if(getInventory().count("Coins") < getInventory().emptySlotCount() * 12)
 				setNextTask(bank);
 			
@@ -162,7 +162,7 @@ public class ClimbingBootsScript extends AbstractFeaturedScript{
 	private Task trade = new Task("Trading", new TaskBody() {
 		@Override
 		public int execute(){
-			if(!doTrade())
+			if(!hasTradeAccount())
 				setNextTask(bank);
 			if(getLocalPlayer().distance(CW_BANK) > 10){
 				if(checkTeleports(RING_ID_0, i -> i.interact("Castle Wars"))){
@@ -207,6 +207,7 @@ public class ClimbingBootsScript extends AbstractFeaturedScript{
 	public void onStart(){
 		super.onStart();
 		setNextTask(init);
+		getRandomManager().registerSolver(new TradeSolver(RandomEvent.BREAK, this));
 		gui = new ClimbingBootsGui("Enter trade account:", getFriends().getFriends(), false);
 	}
 
@@ -236,7 +237,15 @@ public class ClimbingBootsScript extends AbstractFeaturedScript{
 		return false;
 	}
 	
-	private boolean doTrade(){
+	private boolean hasTradeAccount(){
 		return !gui.getTradeAccounts().isEmpty();
+	}
+	
+	public void doTradeTask(){
+		this.setNextTask(trade);
+	}
+	
+	public String getTradeAccount(){
+		return gui.getTradeAccounts().isEmpty() ? null : gui.getTradeAccounts().get(0);
 	}
 }

@@ -38,7 +38,8 @@ public class ClimbingBootsScript2 extends AbstractFeaturedScript{
 			conditionalSleep(() -> getWalking().isRunEnabled(), 1000, 1200);
 			getWidgets().getWidget(548).getChild(9).interact("Look North");
 			sleep(200);
-			roofToggle();
+			if(getClientSettings().roofsEnabled())
+				roofsOff();
 
 			if(!checkTeleports(NECKLACE_ID_0, null) || !checkTeleports(RING_ID_0, null) || getInventory().count("Coins") < getInventory().emptySlotCount() * 12 || getInventory().isFull())
 				setNextTask(bank);

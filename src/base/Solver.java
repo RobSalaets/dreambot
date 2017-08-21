@@ -4,8 +4,6 @@ import org.dreambot.api.methods.MethodContext;
 import org.dreambot.api.randoms.RandomEvent;
 import org.dreambot.api.randoms.RandomSolver;
 
-//getRandomManager().registerSolver(new Solver(RandomEvent.BREAK, this)); in onstart
-
 public class Solver extends RandomSolver {
 
     public Solver(RandomEvent randomEvent, MethodContext methodContext) {

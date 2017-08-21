@@ -35,7 +35,8 @@ public class ClimbingBootsTraderScript extends AbstractFeaturedScript{
 			sleep(500);
 			getWidgets().getWidget(548).getChild(9).interact("Look North");
 			sleep(200);
-			roofToggle();
+			if(getClientSettings().roofsEnabled())
+				roofsOff();
 
 			if(getInventory().isFull())
 				setNextTask(bank);
