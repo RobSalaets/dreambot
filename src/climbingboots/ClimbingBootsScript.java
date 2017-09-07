@@ -3,8 +3,9 @@ package climbingboots;
 import java.util.function.Consumer;
 
 import org.dreambot.api.methods.Calculations;
+import org.dreambot.api.methods.container.impl.bank.BankMode;
 import org.dreambot.api.methods.map.Tile;
-import org.dreambot.api.randoms.RandomEvent;
+import org.dreambot.api.methods.tabs.Tab;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.wrappers.interactive.GameObject;
@@ -21,6 +22,7 @@ public class ClimbingBootsScript extends AbstractFeaturedScript{
 
 	private final int NECKLACE_ID_0 = 3853;
 	private final int RING_ID_0 = 2552;
+	private final int BOOTS_ID = 3105;
 	private final Tile TENZING_SHED = new Tile(2825, 3555, 0);
 	private final Tile TENZING_SHED_HW = new Tile(2855, 3571, 0);
 	private final Tile BURTHORPE = new Tile(2900, 3555, 0);
@@ -73,10 +75,8 @@ public class ClimbingBootsScript extends AbstractFeaturedScript{
 			if(getLocalPlayer().distance(TENZING_SHED) < 2){
 				openObstacle("Gate");
 				openObstacle("Door");
-				getWalking().walk(TENZING);
-				walkingSleep();
 			}
-			if(getLocalPlayer().distance(TENZING) < 2){
+			if(getLocalPlayer().distance(TENZING) < 3){
 				setNextTask(tenzingTalk);
 			}
 			return 1;
@@ -86,14 +86,13 @@ public class ClimbingBootsScript extends AbstractFeaturedScript{
 	private Task tenzingTalk = new Task("Tenzing Talk", new TaskBody() {
 		@Override
 		public int execute(){
-			if(getLocalPlayer().distance(TENZING) > 2)
+			if(getLocalPlayer().distance(TENZING) > 3)
 				setNextTask(shedWalk);
 			if((getInventory().isFull() && getInventory().count("Coins") != 12)){
 				setNextTask(bank);
 			}else if(getInventory().count("Coins") < getInventory().emptySlotCount() * 12)
 				setNextTask(bank);
-			
-			
+
 			if(getDialogues().inDialogue()){
 				if(getDialogues().getOptions() != null)
 					getDialogues().typeOption(1);
@@ -137,12 +136,20 @@ public class ClimbingBootsScript extends AbstractFeaturedScript{
 							getBank().withdraw(RING_ID_0);
 							conditionalSleep(() -> getInventory().contains(RING_ID_0), 800, 1200);
 						}
-						getBank().close();
-						if(!checkTeleports(NECKLACE_ID_0, null) || !checkTeleports(RING_ID_0, null)){
-							log("No teleports in bank");
-							stop();
+
+						if(hasTradeAccount()){
+							Player trader = getPlayers().closest(getTradeAccount().trim());
+							if(trader != null && getBank().count(BOOTS_ID) > 0){
+								getBank().setWithdrawMode(BankMode.NOTE);
+								getBank().withdrawAll(BOOTS_ID);
+								conditionalSleep(() -> getInventory().contains(BOOTS_ID + 1), 800, 1200);
+								getBank().setWithdrawMode(BankMode.ITEM);
+								setNextTask(trade);
+							}
 						}
-						if(getInventory().count("Coins") == 336 && checkTeleports(NECKLACE_ID_0, null) && checkTeleports(RING_ID_0, null))
+
+						getBank().close();
+						if(getInventory().count("Coins") == 336 && getInventory().count(BOOTS_ID + 1) == 0 && checkTeleports(NECKLACE_ID_0, null) && checkTeleports(RING_ID_0, null))
 							setNextTask(shedWalk);
 					}
 				return Calculations.random(200, 300);
@@ -162,41 +169,25 @@ public class ClimbingBootsScript extends AbstractFeaturedScript{
 	private Task trade = new Task("Trading", new TaskBody() {
 		@Override
 		public int execute(){
-			if(!hasTradeAccount())
+			if(!hasTradeAccount()){
 				setNextTask(bank);
-			if(getLocalPlayer().distance(CW_BANK) > 10){
-				if(checkTeleports(RING_ID_0, i -> i.interact("Castle Wars"))){
-					conditionalSleep(() -> getLocalPlayer().distance(CW_BANK) < 4, 4000, 4500);
-					Player p = getPlayers().closest(gui.getTradeAccounts().get(0));
-					if(p != null){
-						getWalking().walk(p);
-						walkingSleep();	
-						return Calculations.random(500, 800);
-					}else{
-						conditionalSleep(()->getPlayers().closest(gui.getTradeAccounts().get(0)) != null, 10000, 12000);
-						if(getPlayers().closest(gui.getTradeAccounts().get(0)) == null){
-							log("no trade account");
-							setNextTask(bank);
-							gui.getTradeAccounts().clear();
-						}
-					}
-				}else{
-					log("No ring");
-					stop();
-				}
+				return Calculations.random(100);
+			}
+
+			if(getTrade().isOpen()){
+				getTrade().addItem(BOOTS_ID + 1, Integer.MAX_VALUE);
+				conditionalSleep(() -> !getInventory().contains(BOOTS_ID + 1), 1000, 2000);
+				getTrade().acceptTrade();
 			}else{
-				if(getTrade().isOpen()){
-					if(getInventory().contains("Climbing boots")){
-						getTrade().addItem("Climbing boots", 28);
-						conditionalSleep(() -> !getInventory().contains("Climbing boots"), 1000, 2000);
-					}
-					getTrade().acceptTrade();
+				if(getInventory().contains(BOOTS_ID + 1)){
+					getTrade().tradeWithPlayer(getTradeAccount());
+					log("Trading with " + getTradeAccount());
+					conditionalSleep(() -> getTrade().isOpen(), 5000, 6000);
 				}else{
-					if(getInventory().contains("Climbing boots")){
-						getTrade().tradeWithPlayer(gui.getTradeAccounts().get(0));
-						log("Trading with " + gui.getTradeAccounts().get(0));
-						conditionalSleep(() -> getTrade().isOpen(), 5000, 6000);
-					}else setNextTask(bank);
+					if(getInventory().count("Coins") != 336)
+						setNextTask(bank);
+					else 
+						setNextTask(shedWalk);
 				}
 			}
 
@@ -207,7 +198,6 @@ public class ClimbingBootsScript extends AbstractFeaturedScript{
 	public void onStart(){
 		super.onStart();
 		setNextTask(init);
-		getRandomManager().registerSolver(new TradeSolver(RandomEvent.BREAK, this));
 		gui = new ClimbingBootsGui("Enter trade account:", getFriends().getFriends(), false);
 	}
 
@@ -225,10 +215,10 @@ public class ClimbingBootsScript extends AbstractFeaturedScript{
 				}
 				if(c != null){
 					getWidgets().getWidget(548).getChild(58).interact();
-					sleep(300);
+					conditionalSleep(() -> getTabs().isOpen(Tab.EQUIPMENT), 500, 1000);
 					c.accept(getEquipment().get(itemID + i));
 					getWidgets().getWidget(548).getChild(57).interact();
-					sleep(300);
+					conditionalSleep(() -> getTabs().isOpen(Tab.INVENTORY), 500, 1000);
 				}
 				return true;
 			}
@@ -236,15 +226,11 @@ public class ClimbingBootsScript extends AbstractFeaturedScript{
 		log("Has no " + itemID);
 		return false;
 	}
-	
+
 	private boolean hasTradeAccount(){
 		return !gui.getTradeAccounts().isEmpty();
 	}
-	
-	public void doTradeTask(){
-		this.setNextTask(trade);
-	}
-	
+
 	public String getTradeAccount(){
 		return gui.getTradeAccounts().isEmpty() ? null : gui.getTradeAccounts().get(0);
 	}

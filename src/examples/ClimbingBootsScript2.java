@@ -1,4 +1,4 @@
-package climbingboots;
+package examples;
 
 import java.util.function.Consumer;
 
@@ -14,6 +14,7 @@ import org.dreambot.api.wrappers.items.Item;
 import base.AbstractFeaturedScript;
 import base.Task;
 import base.Task.TaskBody;
+import climbingboots.ClimbingBootsGui;
 
 @ScriptManifest(author = "RobbieBoi", name = "Climbing Boots 2", version = 1.0, description = "Buys climbing boots from tenzing and banks them at castle wars bank, or trade with given acc", category = Category.MONEYMAKING)
 public class ClimbingBootsScript2 extends AbstractFeaturedScript{

@@ -6,10 +6,12 @@ import java.util.function.Consumer;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.map.Tile;
+import org.dreambot.api.randoms.RandomEvent;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.api.wrappers.items.Item;
+import org.dreambot.api.wrappers.widgets.message.Message;
 
 import base.AbstractFeaturedScript;
 import base.Task;
@@ -18,6 +20,7 @@ import base.Task.TaskBody;
 @ScriptManifest(author = "RobbieBoi", name = "Climbing Boots Trader", version = 1.0, description = "Use in combination with ClimbingBootsScript, receives trades from other acc", category = Category.MONEYMAKING)
 public class ClimbingBootsTraderScript extends AbstractFeaturedScript{
 
+	private final int NOTED_BOOTS_ID = 3106;
 	private final int RING_ID_0 = 2552;
 	private final Tile CW_BANK = new Tile(2439, 3092, 0);
 	private final Tile CW_CHEST_TILE = new Tile(2443, 3083, 0);
@@ -26,21 +29,15 @@ public class ClimbingBootsTraderScript extends AbstractFeaturedScript{
 
 	private Queue<String> traderQueue;
 	private boolean trading;
+	private boolean logout;
 
 	private Task init = new Task("Initialize", new TaskBody() {
 		@Override
 		public int execute(){
-			if(getWalking().isRunEnabled())
-				getWalking().toggleRun();
-			sleep(500);
 			getWidgets().getWidget(548).getChild(9).interact("Look North");
 			sleep(200);
-			if(getClientSettings().roofsEnabled())
-				roofsOff();
 
-			if(getInventory().isFull())
-				setNextTask(bank);
-			else if(getLocalPlayer().distance(CW_BANK) > 10){
+			if(getLocalPlayer().distance(CW_BANK) > 10){
 				if(checkTeleports(RING_ID_0, i -> i.interact("Castle Wars")))
 					conditionalSleep(() -> getLocalPlayer().distance(CW_BANK) < 4, 4000, 4500);
 				else{
@@ -66,7 +63,11 @@ public class ClimbingBootsTraderScript extends AbstractFeaturedScript{
 						getBank().depositAllItems();
 						conditionalSleep(() -> getInventory().isEmpty(), 800, 1200);
 						getBank().close();
+						conditionalSleep(() -> !getBank().isOpen(), 1000, 2500);
+						getTabs().logout();
+						getRandomManager().disableSolver(RandomEvent.LOGIN);
 						setNextTask(trade);
+						logout = false;
 					}
 				return Calculations.random(200, 300);
 			}
@@ -78,43 +79,59 @@ public class ClimbingBootsTraderScript extends AbstractFeaturedScript{
 	});
 
 	private Task trade = new Task("Trading", new TaskBody() {
+
+		private boolean contactedTrader = false;
+
 		@Override
 		public int execute(){
-
 			if(trading){
 				String traderName = traderQueue.peek().trim();
-				if(getTrade().isOpen()){
-					if(getTrade().getTheirItems() != null){
-						getTrade().acceptTrade();
-						return Calculations.random(200, 400);
-					}
-					log("Trading with " + traderName);
-					conditionalSleep(() -> getTrade().getTheirItems() != null, 2000, 3000);
-
-				}else if(getInventory().fullSlotCount() > 0){
-					setNextTask(bank);
-					trading = false;
+				if(getPlayers().closest(traderName) == null){
+					log("Boike is erni");
 					traderQueue.remove();
+					contactedTrader = false;
+				}else if(getTrade().isOpen()){
+					log("Trading with " + traderName);
+					contactedTrader = true;
+					if(getTrade().getTheirItems() == null ||
+						getTrade().getTheirItems()[0].getID() == NOTED_BOOTS_ID)
+						getTrade().acceptTrade();
+					else
+						getTrade().declineTrade();
+					
+					conditionalSleep(() -> getTrade().getTheirItems() != null || !getTrade().isOpen(), 2000, 3000);
+				}else if(contactedTrader){
+					traderQueue.remove();
+					contactedTrader = false;
 				}else{
 					getTrade().tradeWithPlayer(traderName);
 					conditionalSleep(() -> getTrade().isOpen(), 1000, 2000);
-					return 1;
 				}
+				if(traderQueue.isEmpty())
+					trading = false;
 			}else{
-				if(timer.formatTime().endsWith("0") && Calculations.random(7) == 0){
-					getWalking().walk(CW_BANK);
-					walkingSleep();
-				}
+				
 			}
+			if(logout && traderQueue.isEmpty())
+				setNextTask(bank);
+			
 			return Calculations.random(200, 400);
 		}
 	});
+
+	@Override
+	public int onLoop(){
+		if(getClient().isLoggedIn())
+			return super.onLoop();
+		return 1000;
+	}
 
 	public void onStart(){
 		super.onStart();
 		setNextTask(init);
 		trading = false;
 		traderQueue = new LinkedList<String>();
+		getRandomManager().registerSolver(new TradeSolver(RandomEvent.BREAK, this));
 		gui = new ClimbingBootsGui("Enter mule accounts: ", getFriends().getFriends(), true);
 	}
 
@@ -142,5 +159,19 @@ public class ClimbingBootsTraderScript extends AbstractFeaturedScript{
 		}
 		log("Has no " + itemID);
 		return false;
+	}
+
+	@Override
+	public void onTradeMessage(Message m){
+		super.onTradeMessage(m);
+		if(gui.getTradeAccounts().contains(m.getUsername()) && !logout){
+			if(!traderQueue.contains(m.getUsername()))
+				traderQueue.add(m.getUsername());
+			trading = true;
+		}
+	}
+	
+	public void startLogout(){
+		logout = true;
 	}
 }
