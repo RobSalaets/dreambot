@@ -17,7 +17,7 @@ import base.AbstractFeaturedScript;
 import base.Task;
 import base.Task.TaskBody;
 
-@ScriptManifest(author = "RobbieBoi", name = "Climbing Boots", version = 1.0, description = "Buys climbing boots from tenzing and banks them at castle wars bank, or trade with given acc", category = Category.MONEYMAKING)
+@ScriptManifest(author = "Rob", name = "Climbing Boots", version = 1.2, description = "Buys climbing boots from tenzing and banks them at castle wars bank, or trade with given acc", category = Category.MONEYMAKING)
 public class ClimbingBootsScript extends AbstractFeaturedScript{
 
 	private final int NECKLACE_ID_0 = 3853;

@@ -28,6 +28,8 @@ import org.dreambot.api.methods.friend.Friend;
 public class ClimbingBootsGui extends JFrame{
 
 	private List<String> accountNames;
+	private float onlineTime = 5;
+	private float offlineTime = 55;
 
 	public ClimbingBootsGui(String label, Friend[] friends, boolean multi){
 		super("Script Settings");
@@ -86,6 +88,13 @@ public class ClimbingBootsGui extends JFrame{
 		});
 		bottom.add(new JLabel(label));
 		bottom.add(txtField);
+		bottom.add(new JLabel("Min. Online:"));
+		JTextField onTxt = new JTextField("5");
+		bottom.add(onTxt);
+		bottom.add(new JLabel("Min. Offline:"));
+		JTextField offTxt = new JTextField("55");
+		bottom.add(offTxt);
+		
 		JButton button = new JButton("Done");
 		button.addActionListener(new ActionListener() {
 			@Override
@@ -93,7 +102,14 @@ public class ClimbingBootsGui extends JFrame{
 				if(e.getSource().equals(button)){
 					if(traderList.getText() != null)
 						accountNames = Arrays.asList(traderList.getText().split("\n"));
-
+					try {
+						onlineTime = Float.parseFloat(onTxt.getText());
+						offlineTime = Float.parseFloat(offTxt.getText());						
+					}catch(Exception ex) {
+						ex.printStackTrace();
+						onlineTime = 5;
+						offlineTime = 55;
+					}
 					if((multi && accountNames.size() > 0) || !multi)
 						dispose();
 				}
@@ -109,5 +125,13 @@ public class ClimbingBootsGui extends JFrame{
 
 	public List<String> getTradeAccounts(){
 		return accountNames;
+	}
+	
+	public float getOnlineTime() {
+		return onlineTime;
+	}
+	
+	public float getOfflineTime() {
+		return offlineTime;
 	}
 }

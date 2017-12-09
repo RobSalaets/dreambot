@@ -17,7 +17,7 @@ import base.AbstractFeaturedScript;
 import base.Task;
 import base.Task.TaskBody;
 
-@ScriptManifest(author = "RobbieBoi", name = "Climbing Boots Trader", version = 1.0, description = "Use in combination with ClimbingBootsScript, receives trades from other acc", category = Category.MONEYMAKING)
+@ScriptManifest(author = "Rob", name = "Climbing Boots Trader", version = 1.2, description = "Use in combination with ClimbingBootsScript, receives trades from other acc", category = Category.MONEYMAKING)
 public class ClimbingBootsTraderScript extends AbstractFeaturedScript{
 
 	private final int NOTED_BOOTS_ID = 3106;
@@ -173,5 +173,13 @@ public class ClimbingBootsTraderScript extends AbstractFeaturedScript{
 	
 	public void startLogout(){
 		logout = true;
+	}
+	
+	public float getOnlineTime() {
+		return gui.getOnlineTime();
+	}
+	
+	public float getOfflineTime() {
+		return gui.getOfflineTime();
 	}
 }
